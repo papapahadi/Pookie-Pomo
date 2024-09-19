@@ -7,15 +7,28 @@
 
 import SwiftUI
 
+extension Color {
+    static let chocolate = Color(red: 149/255, green: 69/255, blue: 53/255)
+}
+
 class PomodoroModel : ObservableObject {
     @Published var secondsLeft = 25 * 60
     @Published var workSession = true
+    @Published var sessionCount = 1
+    @Published var totalSession = 6
     var timer : Timer?
     var timeString : String {
         let minutes = secondsLeft / 60
         let seconds = secondsLeft % 60
         return String(format: "%02d:%02d",minutes,seconds)
     }
+    
+    var progress : Double {
+        let totalSeconds = workSession ? Double(60 * workDuration) : Double(60 * breakDuration)
+        let x = totalSeconds - Double(secondsLeft)
+        return Double( x / totalSeconds )
+    }
+    
     @Published var workDuration = 25
     @Published var breakDuration = 5
     func startTimer() {
@@ -25,7 +38,7 @@ class PomodoroModel : ObservableObject {
                 self.secondsLeft -= 1
             }
             else {
-                switchSession()
+                self.switchSession()
             }
         }
     }
@@ -41,11 +54,16 @@ class PomodoroModel : ObservableObject {
     }
     
     func switchSession() {
+        workSession.toggle()
         if workSession {
-            workSession = false
+            //workSession = false
+            secondsLeft = 60 * workDuration
+            
         }
         else {
-            workSession = true
+            //workSession = true
+            secondsLeft = 60 * breakDuration
+            sessionCount += 1
         }
     }
     
@@ -57,18 +75,32 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            Pomodoro(pomodoroModel: pomodoroModel)
-                .toolbar {
-                    Button {
-                        isSettingPresented = true
-                    } label: {
-                        Image(systemName: "gear")
-                            .foregroundColor(.black)
+            ZStack{
+                Image(.pomobackground)
+                    .resizable()
+                    .frame(height: .infinity)
+                    
+                Pomodoro(pomodoroModel: pomodoroModel)
+                    .padding(35)
+                    .background(.ultraThinMaterial)
+                    .clipShape(.rect(cornerRadius: 20))
+                    .shadow(radius: 3)
+                    //.position(CGPoint(x: 200.0, y: 400.0))
+                    .toolbar {
+                        ToolbarItem( placement: .topBarTrailing) {
+                            Button( ) {
+                                isSettingPresented = true
+                            } label: {
+                                Image(systemName: "gear")
+                                    .foregroundColor(.white)
+                            }
+                        }
                     }
-                }
-                .sheet(isPresented: $isSettingPresented){
-                    Settings(pomodoroModel: pomodoroModel)
-                }
+                    .sheet(isPresented: $isSettingPresented){
+                        Settings(pomodoroModel: pomodoroModel)
+                    }
+            }
+            .ignoresSafeArea()
         }
     }
 }
@@ -78,50 +110,54 @@ struct Settings : View {
     @ObservedObject var pomodoroModel : PomodoroModel
     var body: some View {
         NavigationStack {
-            
-            ZStack {
-                LinearGradient(colors: [.white, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
-                VStack {
-                    Spacer()
+            Form {
+                //                LinearGradient(colors: [Color.chocolate, .white], startPoint: .topLeading, endPoint: .bottomTrailing)
+                //                RadialGradient(colors: [.black, .indigo], center: .center, startRadius: 30, endRadius: 80)
+                
                     Section {
                         Text("Settings")
-                            .font(.headline)
+                            .font(.custom("headline", size: 34))
                     }
-                    Spacer()
-                    Section(header: Text("Work Duration")) {
+                    //Divider()
+                    
+                Section(header: Text("Work Duration")
+                    .font(.custom("body", size: 15))){
                         Picker("Minutes", selection: $pomodoroModel.workDuration){
                             ForEach(1...60, id: \.self) { minute in
                                 Text("\(minute)")
                             }
                         }
                     }
-        
-                    Section(header: Text("Break Duration")) {
+                    
+                    Section(header: Text("Break Duration")
+                        .font(.custom("body", size: 15))
+                    ) {
                         Picker("Break", selection: $pomodoroModel.breakDuration){
                             ForEach(1...60, id: \.self) { second in
                                 Text("\(second)")
                             }
                         }
                     }
+                
+                Section(header: Text("Total Session")
+                    .font(.custom("body", size: 15))
+                ) {
+                    Picker("Session", selection: $pomodoroModel.totalSession){
+                        ForEach(1...12, id: \.self) { session in
+                            Text("\(session)")
+                        }
+                    }
+                }
                     
-                    Spacer()
-                    Spacer()
+                   
                     Section {
                         Button("save") {
                             pomodoroModel.resetTimer()
                             dismissSheet()
                         }
-                        .padding()
-                        .foregroundStyle(.white)
-                        .background(LinearGradient(colors: [.red, .purple], startPoint: .top, endPoint: .bottom))
-                        .clipShape(.rect(cornerRadius: 29))
-                        .shadow(radius: 3)
                     }
-                    Spacer()
-                }
                 
             }
-                
             
         }
     }
@@ -131,19 +167,37 @@ struct Pomodoro : View {
     @ObservedObject var pomodoroModel : PomodoroModel
     @State private var isPause = true
     var body: some View {
-        ZStack {
-            LinearGradient(colors: [.pink, .white], startPoint: .topLeading, endPoint: .bottomTrailing)
+//            LinearGradient(colors: [.pink, .white], startPoint: .topLeading, endPoint: .bottomTrailing)
             VStack {
-                Text(pomodoroModel.workSession ? "Work Time" : "Break TIme")
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(pomodoroModel.workSession ? .red : .green)
-                
+                HStack {
+                    Image(systemName: "brain")
+                        .foregroundStyle(Color.chocolate)
+                        
+                    Text(pomodoroModel.workSession ? "Work Time" : "Break Time")
+                        .font(.largeTitle)
+                        .bold()
+                        .foregroundStyle(pomodoroModel.workSession ? Color.chocolate : .brown)
+                        .shadow(radius: 1)
+                    //.fill(Color.red.mix(with: .indigo, by: 0.5))
+                }
                 HStack {
                     Text(pomodoroModel.timeString)
                         .font(.largeTitle.bold())
                         .foregroundStyle(.white)
+                        .shadow(radius: 3)
                 }
                 .padding()
+                
+                ProgressView(value: pomodoroModel.progress)
+                    .containerRelativeFrame(.horizontal){size, axis in
+                        return size * 0.6
+                    }
+                    .padding()
+                
+                Text("session \(pomodoroModel.sessionCount) of \(pomodoroModel.totalSession)")
+                    .foregroundStyle(Color.chocolate)
+                    .font(.callout)
+                
                 HStack {
                     Button{
                         if isPause { pomodoroModel.startTimer() }
@@ -155,15 +209,17 @@ struct Pomodoro : View {
                             Image(systemName: "play.fill")
                                 .padding()
                                 .foregroundStyle(.white)
-                                .background(LinearGradient(colors: [.red, .purple], startPoint: .top, endPoint: .bottom))
+                                .background(LinearGradient(colors: [.red, Color.chocolate], startPoint: .top, endPoint: .bottom))
                                 .clipShape(Circle())
+                                .shadow(radius: 5)
                         }
                         else {
                             Image(systemName: "pause.fill")
                                 .padding()
                                 .foregroundStyle(.white)
-                                .background(LinearGradient(colors: [.red, .purple], startPoint: .top, endPoint: .bottom))
+                                .background(LinearGradient(colors: [.red, Color.chocolate], startPoint: .top, endPoint: .bottom))
                                 .clipShape(Circle())
+                                .shadow(radius: 5)
                                 
                         }
                         
@@ -176,16 +232,16 @@ struct Pomodoro : View {
                     } label: {
                          Image(systemName: "arrow.clockwise")
                             .padding()
-                            .background(LinearGradient(colors: [.blue, .purple], startPoint: .top, endPoint: .bottom))
+                            .background(LinearGradient(colors: [Color.orange, Color.red], startPoint: .top, endPoint: .bottom))
                             .foregroundStyle(.white)
                             .clipShape(Circle())
                             .shadow(radius: 5)
                     }
                     .padding()
                 }
-    
+                
             }
-        }
+        
         .ignoresSafeArea()
     }
 }
@@ -194,4 +250,5 @@ struct Pomodoro : View {
 
 #Preview {
     ContentView(pomodoroModel: PomodoroModel())
+        
 }
