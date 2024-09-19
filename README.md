@@ -63,10 +63,5 @@ The app is built using SwiftUI and leverages the `ObservableObject` pattern to m
 - **Dark Mode Support**: Improve UI for dark mode compatibility.
 - **Statistics**: Track and display user productivity over time.
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ---
 
-Feel free to adjust any specific details like links or add sections like screenshots depending on your project.
