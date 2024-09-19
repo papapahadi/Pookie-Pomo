@@ -12,6 +12,7 @@ A simple and customizable Pomodoro timer app built using SwiftUI, designed to he
 
 ## Screenshots
 
+![Untitled design](https://github.com/user-attachments/assets/ba82620b-39d0-46c7-8b4b-8d56b42e8388)
 
 
 ## How to Use
