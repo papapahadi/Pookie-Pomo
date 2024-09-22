@@ -78,7 +78,7 @@ struct ContentView: View {
             ZStack{
                 Image(.pomobackground)
                     .resizable()
-                    .frame(height: .infinity)
+                    //.frame(height: .infinity)
                     
                 Pomodoro(pomodoroModel: pomodoroModel)
                     .padding(35)
@@ -166,12 +166,15 @@ struct Settings : View {
 struct Pomodoro : View {
     @ObservedObject var pomodoroModel : PomodoroModel
     @State private var isPause = true
+    let quotes = ["The magic you are looking for is in the work you are avoiding. ", "If You Always Do What You’ve Always Done, You’ll Always Get What You’ve Always Got."]
     var body: some View {
 //            LinearGradient(colors: [.pink, .white], startPoint: .topLeading, endPoint: .bottomTrailing)
             VStack {
                 HStack {
-                    Image(systemName: "brain")
+                    
+                    Image(systemName: pomodoroModel.workSession ? "brain" : "coffee")
                         .foregroundStyle(Color.chocolate)
+                    
                         
                     Text(pomodoroModel.workSession ? "Work Time" : "Break Time")
                         .font(.largeTitle)
@@ -192,6 +195,7 @@ struct Pomodoro : View {
                     .containerRelativeFrame(.horizontal){size, axis in
                         return size * 0.6
                     }
+
                     .padding()
                 
                 Text("session \(pomodoroModel.sessionCount) of \(pomodoroModel.totalSession)")
@@ -250,5 +254,6 @@ struct Pomodoro : View {
 
 #Preview {
     ContentView(pomodoroModel: PomodoroModel())
+        .preferredColorScheme(.light)
         
 }
